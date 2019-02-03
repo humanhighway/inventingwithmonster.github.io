@@ -6,6 +6,7 @@ import { getSinglePost } from "../../utils/selectors";
 import styled from "styled-components";
 import { ContentContainer } from "../../components/bits";
 import { Author } from "./Author";
+import { media } from "../../utils/media";
 
 const Title = styled.h1`
   color: #32005c;
@@ -15,6 +16,12 @@ const Title = styled.h1`
   text-transform: uppercase;
   text-align: center;
   margin-bottom: 50px;
+
+  ${media.tablet`font-size: 48px;`}
+  ${media.phone`
+    text-align: left;
+    font-size: 32px;
+  `}
 `;
 
 export default ({ data }) => {

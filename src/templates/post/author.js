@@ -1,6 +1,7 @@
 import React from "react";
 import ImgMattPerryProfile from "../../images/photo-of-matt-perry.jpg";
 import styled from "styled-components";
+import { media } from "../../utils/media";
 
 const authors = {
   mattperry: {
@@ -21,6 +22,11 @@ const Avatar = styled.img`
   height: 40px;
   border-radius: 50%;
   margin-right: 10px;
+
+  ${media.phone`
+    width: 32px;
+    height: 32px;
+  `}
 `;
 
 const Name = styled.span`

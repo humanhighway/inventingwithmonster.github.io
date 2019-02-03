@@ -5,6 +5,7 @@ import SEO from "../components/seo";
 import { getPosts, getInfo } from "../utils/selectors";
 import { ContentContainer } from "../components/bits";
 import styled from "styled-components";
+import { media } from "../utils/media";
 
 const Container = styled.div`
   a {
@@ -15,6 +16,9 @@ const Container = styled.div`
     text-decoration: none;
     display: block;
     line-height: 1;
+
+    ${media.tablet`font-size: 28px;`}
+    ${media.phone`font-size: 24px;`}
   }
 `;
 
@@ -23,7 +27,10 @@ const Date = styled.p`
   font-size: 14px;
 `;
 
-const Summary = styled.p``;
+const Summary = styled.p`
+  font-size: 18px;
+  ${media.tablet`font-size: 16px;`}
+`;
 
 const IndexPage = ({ data }) => {
   return (

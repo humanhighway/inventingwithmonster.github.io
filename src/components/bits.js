@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { media } from "../utils/media";
 
 const verticalSpacing = "25px";
 const yellow = "#FFDE4D";
@@ -12,6 +13,7 @@ export const ContentContainer = styled.div`
   }
 
   > p {
+    font-size: 18px;
     margin-bottom: ${verticalSpacing};
     line-height: 1.6;
   }
@@ -27,6 +29,10 @@ export const ContentContainer = styled.div`
     text-transform: uppercase;
     font-size: 36px;
     margin: 50px auto ${verticalSpacing};
+  }
+
+  h3 {
+    font-size: 28px;
   }
 
   a {
@@ -207,4 +213,24 @@ export const ContentContainer = styled.div`
       bottom: .4em;
   }
 `}
+
+  ${media.tablet`
+    > p:first-child {
+      font-size: 18px;
+    }
+
+    h2 {
+      font-size: 28px;
+    }
+
+    h3 {
+      font-size: 18px;
+    }
+  `}
+
+  ${media.phone`
+    h2 {
+      font-size: 24px;
+    }
+  `}
 `;

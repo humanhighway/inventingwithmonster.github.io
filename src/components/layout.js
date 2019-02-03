@@ -5,6 +5,7 @@ import Header from "./header";
 import Footer from "./footer";
 import styled, { createGlobalStyle, ThemeProvider } from "styled-components";
 import { siteTheme } from "./themes.js";
+import { media } from "../utils/media";
 import "./layout.css";
 
 const GlobalStyle = createGlobalStyle`
@@ -36,6 +37,9 @@ const Container = styled.div`
   ${({ theme }) => `background: ${theme.background};`}
   min-height: calc(100vh - 20px);
   padding: 30px;
+
+  ${media.tablet`padding: 20px;`}
+  ${media.phone`padding: 10px;`}
 `;
 
 const Layout = ({ children }) => (
