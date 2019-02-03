@@ -15,5 +15,6 @@ export const getSinglePost = ({ markdownRemark }) => ({
   id: getId(markdownRemark),
   title: getTitle(markdownRemark),
   date: getDate(markdownRemark),
+  author: markdownRemark.frontmatter.author,
   html: markdownRemark.html
 });
