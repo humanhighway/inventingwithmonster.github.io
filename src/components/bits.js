@@ -67,14 +67,14 @@ export const ContentContainer = styled.div`
       white-space: pre;
       white-space: pre-wrap;
       word-wrap: normal;
-      font-family: Menlo, Monaco, "Courier New", monospace;
       font-size: 16px;
-      color: ${theme.main};
       text-shadow: none;
   }
+
   pre[class*="language-"],
   :not(pre)>code[class*="language-"] {
       background: ${theme.dark};
+      color: ${theme.main};
   }
   pre[class*="language-"] {
       padding: 15px;
