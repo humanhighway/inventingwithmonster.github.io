@@ -4,6 +4,22 @@ import { media } from "../utils/media";
 const verticalSpacing = "25px";
 const yellow = "#FFDE4D";
 
+export const Title = styled.h1`
+  color: #32005c;
+  font-size: 72px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 50px;
+
+  ${media.tablet`font-size: 48px;`}
+  ${media.phone`
+    text-align: left;
+    font-size: 32px;
+  `}
+`;
+
 export const ContentContainer = styled.div`
   ${({ theme }) => `
   > * {
@@ -22,6 +38,18 @@ export const ContentContainer = styled.div`
     font-size: 24px;
     font-weight: 600;
     line-height: 1.4;
+  }
+
+  > blockquote {
+    border-left: 2px solid ${theme.main};
+    padding: 20px;
+    background: #f0f0f0;
+    margin-bottom: ${verticalSpacing};
+    border-radius: 5px;
+  }
+
+  > ul, > ol {
+    margin-bottom: ${verticalSpacing};
   }
 
   h2, h3 {
@@ -233,4 +261,5 @@ export const ContentContainer = styled.div`
       font-size: 24px;
     }
   `}
+
 `;

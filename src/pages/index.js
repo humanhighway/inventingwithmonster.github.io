@@ -3,9 +3,16 @@ import { graphql, Link } from "gatsby";
 import Layout from "../components/layout";
 import SEO from "../components/seo";
 import { getPosts, getInfo } from "../utils/selectors";
-import { ContentContainer } from "../components/bits";
+import { ContentContainer, Title } from "../components/bits";
 import styled from "styled-components";
 import { media } from "../utils/media";
+
+const HomepageTitle = styled(Title)`
+  margin-bottom: 100px;
+
+  ${media.tablet`margin-bottom: 70px;`}
+  ${media.phone`margin-bottom: 50px;`}
+`;
 
 const Container = styled.div`
   a {
@@ -40,9 +47,11 @@ const IndexPage = ({ data }) => {
           `matt perry, popmotion, react, pose, framer, framer motion, ui animation`
         ]}
       />
+      <HomepageTitle>{`A blog about motion & UI`}</HomepageTitle>
       <ContentContainer>
         {getPosts(data).map(edge => {
           const { id, title, date, excerpt } = getInfo(edge.node);
+
           return (
             <Container key={id}>
               <Link to={id}>{title}</Link>
@@ -69,9 +78,9 @@ export const query = graphql`
             title
             date(formatString: "DD MMM YYYY")
           }
-          excerpt
           fields {
             slug
+            description
           }
         }
       }

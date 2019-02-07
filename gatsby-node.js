@@ -11,11 +11,16 @@ const handleMarkdown = ({ node, getNode, actions }) => {
     value: slug
   });
 
-  // TODO Generate this from the file itself
   createNodeField({
     node,
     name: "author",
-    value: "mattperry"
+    value: node.frontmatter.author || "mattperry"
+  });
+
+  createNodeField({
+    node,
+    name: "description",
+    value: node.frontmatter.description
   });
 };
 
@@ -39,6 +44,7 @@ exports.createPages = ({ graphql, actions }) => {
             fields {
               slug
               author
+              description
             }
           }
         }
@@ -53,7 +59,8 @@ exports.createPages = ({ graphql, actions }) => {
           // Data passed to context is available
           // in page queries as GraphQL variables.
           slug: node.fields.slug,
-          author: node.fields.author
+          author: node.fields.author,
+          description: node.fields.description
         }
       });
     });

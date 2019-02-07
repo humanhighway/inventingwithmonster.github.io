@@ -4,33 +4,17 @@ import SEO from "../../components/seo";
 import { graphql } from "gatsby";
 import { getSinglePost } from "../../utils/selectors";
 import styled from "styled-components";
-import { ContentContainer } from "../../components/bits";
+import { Title, ContentContainer } from "../../components/bits";
 import { Author } from "./Author";
-import { media } from "../../utils/media";
-
-const Title = styled.h1`
-  color: #32005c;
-  font-size: 72px;
-  font-weight: 900;
-  letter-spacing: -1px;
-  text-transform: uppercase;
-  text-align: center;
-  margin-bottom: 50px;
-
-  ${media.tablet`font-size: 48px;`}
-  ${media.phone`
-    text-align: left;
-    font-size: 32px;
-  `}
-`;
 
 export default ({ data }) => {
-  const { html, title, author, date } = getSinglePost(data);
+  const { html, title, author, date, excerpt } = getSinglePost(data);
 
   return (
     <Layout>
       <SEO
         title={title}
+        description={excerpt}
         keywords={[
           `matt perry`,
           `popmotion`,
@@ -63,6 +47,7 @@ export const query = graphql`
       fields {
         slug
         author
+        description
       }
     }
   }
