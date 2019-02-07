@@ -42,7 +42,7 @@ Are you breaking the rules to genuinely circumvent a technical limitation? Or is
 
 As [Dan notes](https://twitter.com/dan_abramov/status/1093499692422492161):
 
-> When does conditional state reset? What can state inside of an event possibly mean?
+> ...the reason it's disallowed is not strictly a technical one. It's that any behavior you could pick would be surprising in some case. Like, when does conditional state reset? What can state inside of an event possibly mean?
 
 `useState`, to give one example, provides state **for the lifetime of a component**. It doesn't make sense to live inside an inline function:
 
