@@ -15,6 +15,10 @@ const HomepageTitle = styled(Title)`
 `;
 
 const Container = styled.div`
+  margin-bottom: 60px;
+
+  ${media.tablet`margin-bottom: 40px;`}
+
   a {
     font-family: "Raleway", sans-serif;
     font-weight: 900;

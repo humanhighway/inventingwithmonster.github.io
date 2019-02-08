@@ -5,7 +5,7 @@ author: mattperry
 date: "20190209"
 ---
 
-React's new [Effect Hook](https://reactjs.org/docs/hooks-effect.html) will, by default, fire after every render.
+By default, React's new [Effect Hook](https://reactjs.org/docs/hooks-effect.html) will run after every render:
 
 ```jsx
 useEffect(() => {
@@ -16,12 +16,9 @@ useEffect(() => {
 But you change this behaviour by passing an array of variables as `useEffect`'s final argument. Whenever one or more of these variables change, `useEffect` will fire after the next render:
 
 ```jsx
-useEffect(
-  () => {
-    console.log("Oh. Nicely done.");
-  },
-  [count]
-);
+useEffect(() => {
+  console.log(`Oh. Nicely done. The latest count is ${count}`);
+}, [count]);
 ```
 
 So consider this API from Popmotion's [Pose](https://popmotion.io/pose/) library:
@@ -30,9 +27,9 @@ So consider this API from Popmotion's [Pose](https://popmotion.io/pose/) library
 <Sidebar pose={['visible', 'active']}>
 ```
 
-The `pose` property can accept an array of one or more "poses" to control its animations.
+The `pose` property accepts an array of one or more "poses" to control its animations.
 
-Well this is great! Previously, we'd have used something like a `shouldComponentUpdate` to manually iterate over the previous and the next arrays to see if they've changed:
+Previously, we'd have used something like a `shouldComponentUpdate` to manually iterate over the previous and the next arrays to see if they're different to each other:
 
 ```javascript
 shouldComponentUpdate(nextProps) {
@@ -40,7 +37,7 @@ shouldComponentUpdate(nextProps) {
 }
 ```
 
-But now it's a simple matter of passing the `pose` array to `useEffect`, and we'll get this for free!
+But now, with `useEffect`'s final argument, it's a simple matter of passing the `pose` array to `useEffect`, and we'll get this for free!
 
 ```jsx
 useEffect(() => {
@@ -48,23 +45,20 @@ useEffect(() => {
 }, pose);
 ```
 
-Yeah! Except no. If the length of `pose` changes, React will throw you this error (which is way clearer than in the alpha):
+Yeah! Except no. If the length of `pose` changes, React will throw you this error:
 
 > The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
 
-Arrays passed in externally are almost bound to change, and if that's rare this bug isn't going to rear its head except in rare circumstances.
+We can't always know if an array passed in as a prop is going to change in length, so we can't assume that it won't. Insidiously, the array may only _rarely_ change in length, which means this error might not throw until its out in the wild.
 
 ## The easy fix
 
 If our array is just numbers or strings, this is an easy fix. You can use the [`Array.join()` method](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/join):
 
 ```jsx
-useEffect(
-  () => {
-    animate(pose);
-  },
-  [pose.join(",")]
-);
+useEffect(() => {
+  animate(pose);
+}, [pose.join(",")]);
 ```
 
 So instead of passing an array like this:
@@ -79,13 +73,13 @@ You're now passing an array like this:
 ["visible,hidden"];
 ```
 
-With the incoming array reduce down to just one item in the comparitor array.
+Your array prop will now always take up just one item in the `useEffect` comparitor array.
 
 ## What's with the comma?
 
-Oh yeah. So the comma might seem superfluous. After all, it's unlikely that different pose names are going to return the same string when you `join` them (but not impossible).
+Oh yeah. So the comma might seem superfluous. After all, it's unlikely that different pose names are going to return the same string when you `join` them.
 
-If the array contains numbers this scenario becomes far more likely:
+But crucially, it isn't impossible. And if the array contains numbers instead of strings, this scenario becomes far more likely:
 
 ```javascript
 [0, 1, 2] -> ['012']
@@ -93,6 +87,11 @@ If the array contains numbers this scenario becomes far more likely:
 ```
 
 By providing `join` with a separator (it could be any character), you're ensuring the returned string remains unique for all combinations.
+
+```javascript
+[0, 1, 2] -> ['0,1,2']
+[0, 12] -> ['0,12']
+```
 
 ## Bloopers
 
@@ -106,7 +105,7 @@ useEffect(() => {
 }, pad(pose, 10));
 ```
 
-So if our `pose` array from before would become:
+So our `pose` array from before would become:
 
 ```javascript
 ["visible", "hidden", null, null, null, null, null, null, null, null];
@@ -114,4 +113,4 @@ So if our `pose` array from before would become:
 
 And the comparitor array given to React would remain the same length, no matter how `pose` grew or shrank.
 
-It worked, but despite 10 being quite a generous pose amount, it's still brittle. It also creates a new array which is more memory-intensive than a string. It's not a big deal but when we're dealing with animations its better to keep garbage collection down where you can.
+It worked, but despite `10` being quite a generous pose amount, it's hardly bullet-proof. It also creates a new array which is more memory-intensive than a string. It's not a big deal but when we're dealing with animations its better to keep garbage collection down where you can.
