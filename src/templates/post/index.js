@@ -3,7 +3,6 @@ import Layout from "../../components/layout";
 import SEO from "../../components/seo";
 import { graphql } from "gatsby";
 import { getSinglePost } from "../../utils/selectors";
-import styled from "styled-components";
 import { Title, ContentContainer } from "../../components/bits";
 import { Author } from "./Author";
 
@@ -20,6 +19,7 @@ export default ({ data }) => {
           `popmotion`,
           `react`,
           `pose`,
+          `popmotion pose`,
           `framer`,
           `framer motion`,
           `ui animation`
