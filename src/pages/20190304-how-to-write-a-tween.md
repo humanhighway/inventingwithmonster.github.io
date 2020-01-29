@@ -362,7 +362,9 @@ Now the animation feels more natural. Different easing functions work well with 
 
 And there you have a basic `tween` function!
 
-There's plenty we can do to improve its usability and functionality. Here's some ideas for you to explore:
+There's plenty we can do to improve its usability and functionality. Here's a couple ideas for you to explore:
 
 - Adding support for units, colors and other value types (hint: you can use a function like [Popcorn's `interpolate`](https://popmotion.io/popcorn/api/interpolate/))
 - Return an API with methods like `pause`, `resume`, `stop` and `seek`.
+
+Let me know how you get on [over at Twitter](https://twitter.com/mattgperry)!

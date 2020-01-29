@@ -33,8 +33,8 @@ export default () => (
       <h2>About me</h2>
       <Avatar src={ImgMattPerryProfile} alt="" />
       <p>
-        Hey! I’m Matt Perry. I do{" "}
-        <a href="https://framer.com">motion @ Framer</a> and take the{" "}
+        Hey! I’m Matt Perry. I write{" "}
+        <a href="https://framer.com/motion">Framer Motion</a> and take the{" "}
         <a href="https://mattperry.photography">occasional photo</a>.
       </p>
       <p>
