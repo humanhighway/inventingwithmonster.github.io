@@ -151,62 +151,36 @@ That code is extra baggage in terms of payload, execution speed, and maintenance
 
 With an unclamped `KeyframeEffect` this would all be unnecessary.
 
-## 4. Interpolation
+## 4. Transforming values
 
-In this demo, each app icon is interpolating its scale and position from the x/y position of the pannable container.
+In Framer Motion, there's a function called `transform`. It transforms values from one range into another:
+
+```javascript
+const x = 50;
+const xRange = [-100, 0, 100, 200];
+const opacityRange = [0, 1, 1, 0];
+const opacity = transform(x, xRange, opacityRange);
+// x is 50, halfway between 0 and 100 in xRange. Therefore opacity is
+// returned as 1, halfway between the corresponding values in opacityRange
+```
+
+It's very powerful. It can be used to output numbers, unit types, complex strings or colors.
+
+In this demo, each app icon is passively transforming its scale and position from the position of the pannable container.
 
 <iframe
   src="https://codesandbox.io/embed/goofy-hill-6j6l074q9r?fontsize=14&hidenavigation=1&theme=dark"
-  style="width:100%; height:500px; border:0; border-radius: 4px; overflow:hidden;"
+  style="width:100%; height:500px; border:0; border-radius: 4px; overflow:hidden;margin-bottom: 50px;"
   title="Framer Motion: Apple Watch Dock"
   allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
   sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
 ></iframe>
 
-In combination with pointer events and unclamped timelines, the ability
+In combination with pointer events and an unclamped `KeyframeEvent`, the ability to do all this away from the main thread would be very powerful.
 
-In theory, it would be possible to write a library that could give any provided target extra "headroom" on either side.
+It isn't possible to do this with Animation Worklet but you could perhaps imagine the ability to pass an existing animation as a `timeline` to an `"transform"` worklet.
 
-For instance, to animate between `0` and `100` with an easing function that overshoots
-
-https://github.com/GoogleChromeLabs/houdini-samples/blob/master/animation-worklet/spring-timing/index.html#L68
-
-Problem with this approach is it works great between values of the same type
-but one of the true benefits of these brwoser animation APIs is animating between value types
-
-x: "500px"
-x: "50vw"
-
-What if 500px is to the left of the element and 100vw is to the right?
-
-```javascript
-// Main thread
-function animate(element, origin, target, duration) {
-  return new WorkletAnimation(
-    "tween",
-    new KeyframeEffect(
-      element,
-      { "--x": [origin, target * 2] },
-      { duration: duration * 2 }
-    ),
-    document.timeline
-  ).play();
-}
-
-// Worklet
-registerAnimation(
-  "tween",
-  class {
-    animate(currentTime, effect) {}
-  }
-);
-```
-
-This pushes the accessibility of Animation Worklet deep into "nonsense that only library authors will ever put up with".
-
-The idea of using `localTime` almost as an abstraction
-
-## Conclusion
+## In Conclusion
 
 We already have a Web Animations API that, while limited, is capable enough to perform keyframe animations. In tandem with Houdini's [Properties and Values API](https://web.dev/css-props-and-vals/) (which already enjoys fair cross-browser support) it can finally animate transforms individually, which was my least favourite thing about it.
 
