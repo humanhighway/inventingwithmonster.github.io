@@ -35,7 +35,10 @@ export default () => (
       <p>
         Hey! I’m Matt Perry. I write{" "}
         <a href="https://framer.com/motion">Framer Motion</a> and take the{" "}
-        <a href="https://mattperry.photography">occasional photo</a>.
+        <a href="https://instagram.com/inventingwithmonster">
+          occasional photo
+        </a>
+        .
       </p>
       <p>
         <a href="https://twitter.com/mattgperry">Twitter</a> |{" "}
