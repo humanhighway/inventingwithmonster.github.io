@@ -179,7 +179,7 @@ Depending on the under or overshoot effects of `easing`, the value of `easedProg
 
 In an ideal world, `KeyframeEffect` could gracefully handle times outside of its defined `duration` and doing so would result in appropriately eased motion. As it's implemented today, the animation would simply break.
 
-Google's spring example from before has an [interesting hack to avoid this](https://github.com/GoogleChromeLabs/houdini-samples/blob/master/animation-worklet/spring-timing/index.html#L68). They multiply the target by `2` to give the animation headroom to overshoot without breaking, and then use that doubled target as `duration`. There's probably a similar "headroom" hack available for adding new easings.
+Google's spring example from before has an [interesting hack to avoid this](https://github.com/GoogleChromeLabs/houdini-samples/blob/master/animation-worklet/spring-timing/index.html#L68). They multiply the target by `2` to give the animation headroom to overshoot without breaking, and then pass that doubled target to `duration` to bend it into a pixel analog. There's probably a similar "headroom" hack available for adding new easings.
 
 A wrapper library could hide this added complexity, but the hack only works with two caveats:
 
@@ -190,11 +190,15 @@ Point one makes a robust solution unpleasant but it is addressable. The second p
 
 The single best thing about using `KeyframeEffect` is it can animate between different value types. Framer Motion also has this ability but it does so by:
 
-1. Measuring the element with the current styles (expensive)
+1. Measuring the element in pixels (expensive)
 2. Applying the target styles
-3. Measuring it again (expensive)
+3. Measuring it in pixels again (expensive)
 4. Running the animation in pixels
-5. Applying the non-pixel target styles when the animation completes (impossible with the current API as animations can't complete)
+5. Applying the non-pixel target styles when the animation completes
+
+Imagine animating between `"100%"` and `"calc(50vw + 200px)"`. We're back to performing these steps even though Animation Worklet is designed to help performance and even though `KeyframeEffect` is perfectly capable of converting between these values.
+
+Even then, we can't even finish the animation by re-applying the actual target styles (`"calc(50vw + 200px)"`) **because the animation can't finish**.
 
 With an unclamped `KeyframeEffect` all of this complexity would disappear.
 
