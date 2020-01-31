@@ -1,0 +1,1 @@
+{"data":{"markdownRemark":null},"pageContext":{"slug":"/20191010-safari-throttles-requestanimationframe-animations-30fps/","author":"mattperry","description":"Webkit-based browsers may throttle requestAnimationFrame to 30fps. Learn when, why, and how you can avoid it."}}
