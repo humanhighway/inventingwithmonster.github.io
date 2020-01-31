@@ -107,7 +107,7 @@ Because of this physics-based approach they create naturalistic and engaging UIs
 
 Google have already made [a spring example](https://github.com/GoogleChromeLabs/houdini-samples/blob/master/animation-worklet/spring-timing/spring-timing-animator.js) and at first glance it looks like this is implementable as soon as we get the ability for an animation to declare itself complete.
 
-However, there no current way for a worklet to report its velocity to be incorporated into subsequent animations.
+However, there's no current way for a worklet to report its velocity to be incorporated into subsequent animations.
 
 It **is** currently feasible to feed an initial velocity via a worklet's `options`. With some mental leaps it's probably possible to wrangle this velocity into something meaningful to the `effect.localTime` abstraction.
 
