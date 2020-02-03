@@ -1,11 +1,11 @@
 ---
-title: "Animation Worklet: The Missing Pieces"
+title: "Animation Worklet: The 4 Missing Pieces"
 description: "There's some glimmers of promise in the current Houdini Animation Worklet API proposal, but it won't be fit for purpose without these changes."
 author: mattperry
 date: "20200203"
 ---
 
-The upcoming [Animation Worklet](https://developers.google.com/web/updates/2018/10/animation-worklet) promises to let developers write performant animations and gestures. But it's still a few missing pieces away from being a solid MVP.
+The upcoming [Animation Worklet](https://developers.google.com/web/updates/2018/10/animation-worklet) promises to let developers write performant animations and gestures. But it's still four missing pieces away from being a solid MVP.
 
 Animation Worklet is part of an interweaving suite of browser APIs collectively called CSS Houdini. Together, they'll offer developers low-level access to various parts of the rendering engine like paint, layout, and of relevance to us, animation.
 
