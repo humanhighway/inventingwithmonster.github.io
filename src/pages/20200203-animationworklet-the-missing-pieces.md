@@ -1,6 +1,6 @@
 ---
 title: "Animation Worklet: The 4 Missing Pieces"
-description: "There's some glimmers of promise in the current Houdini Animation Worklet API proposal, but it won't be fit for purpose without these changes."
+description: "There's glimmers of promise in the current Houdini Animation Worklet API proposal, but it won't be an MVP without introducing four specific things."
 author: mattperry
 date: "20200203"
 ---

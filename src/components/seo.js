@@ -51,6 +51,10 @@ function SEO({ description, lang, meta, keywords, title }) {
               {
                 name: `twitter:description`,
                 content: metaDescription
+              },
+              {
+                name: `twitter:image`,
+                content: "/icons/icon-512x512.png"
               }
             ]
               .concat(
