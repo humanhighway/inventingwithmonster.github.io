@@ -1,6 +1,6 @@
 ---
 title: Can I use Framer Motion with Styled Components?
-description: "Framer Motion is fully compatible with Styled Components. Take a look at how simple the two work together."
+description: "Framer Motion is fully compatible with Styled Components. Find out how."
 author: mattperry
 date: "20200302"
 ---
