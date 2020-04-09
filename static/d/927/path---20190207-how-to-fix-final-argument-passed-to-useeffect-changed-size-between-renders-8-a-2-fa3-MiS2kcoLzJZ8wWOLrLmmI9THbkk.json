@@ -1,1 +1,0 @@
-{"pageContext":{"slug":"/20190207-how-to-fix-final-argument-passed-to-useeffect-changed-size-between-renders/","author":"mattperry","description":"You want to pass through a prop directly to useEffect's final argument, but React has other ideas."}}
