@@ -28,6 +28,10 @@ export const ContentContainer = styled.div`
     max-width: 650px;
   }
 
+  > iframe {
+    max-width: 700px;
+  }
+
   > p {
     font-size: 18px;
     margin-bottom: ${verticalSpacing};

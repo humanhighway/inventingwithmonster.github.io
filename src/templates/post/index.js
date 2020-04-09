@@ -1,19 +1,19 @@
 import React from "react";
 import Layout from "../../components/layout";
 import SEO from "../../components/seo";
-import { graphql } from "gatsby";
-import { getSinglePost } from "../../utils/selectors";
 import { Title, ContentContainer } from "../../components/bits";
 import { Author } from "./Author";
 
-export default ({ data }) => {
-  const { html, title, author, date, excerpt } = getSinglePost(data);
+export default (props) => {
+  const { children, pageContext } = props;
+  const { date, frontmatter } = pageContext;
+  const { title, description, author } = frontmatter;
 
   return (
     <Layout>
       <SEO
         title={title}
-        description={excerpt}
+        description={description}
         keywords={[
           `matt perry`,
           `popmotion`,
@@ -22,7 +22,7 @@ export default ({ data }) => {
           `popmotion pose`,
           `framer`,
           `framer motion`,
-          `ui animation`
+          `ui animation`,
         ]}
       />
       <article>
@@ -30,25 +30,8 @@ export default ({ data }) => {
         <ContentContainer>
           <Author id={author} date={date} />
         </ContentContainer>
-        <ContentContainer dangerouslySetInnerHTML={{ __html: html }} />
+        <ContentContainer>{children}</ContentContainer>
       </article>
     </Layout>
   );
 };
-
-export const query = graphql`
-  query($slug: String!) {
-    markdownRemark(fields: { slug: { eq: $slug } }) {
-      html
-      frontmatter {
-        title
-        date(formatString: "DD MMM YYYY")
-      }
-      fields {
-        slug
-        author
-        description
-      }
-    }
-  }
-`;

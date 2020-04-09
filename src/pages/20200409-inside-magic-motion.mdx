@@ -1,0 +1,361 @@
+---
+title: "The Magic Inside Magic Motion"
+description: "Magic Motion is a powerful new feature in Framer that can automatically animate between any two screens. Let's discover how it animates layouts at 60fps."
+author: mattperry
+date: "20200409"
+---
+
+import { Switch } from "../examples/20200408/Switch";
+import {
+  Distorted,
+  Undistorted,
+  Independent,
+  IndependentBroken,
+} from "../examples/20200408/Distortion";
+import { ShadowRatio } from "../examples/20200408/ShadowRatio";
+
+Magic Motion is a powerful new feature in [Framer](https://framer.com) that allows designers to link any two frames and smoothly animate between them.
+
+Magic Motion is built on the new [auto-animate](<https://framer.com/api/motion/animation/#automatic-(beta)>) and [shared layout](https://framer.com/api/motion/animate-shared-layout) features in Framer Motion 2. So as a developer, handoff isn't a pit-of-the-stomach experience, or a hasty "you can't do that on the web!"
+
+Implementing a Magic Motion prototype as a production-ready, URL-driven animation between completely different views is just a few lines of React markup:
+
+<iframe
+  src="https://codesandbox.io/embed/framer-motion-magic-motion-app-store-demo-su6mx?fontsize=14&theme=light"
+  style="width:100%; height:500px; border:0; border-radius: 4px; overflow:hidden;margin-bottom: 40px;"
+  title="Framer Motion: Magic Motion App Store demo"
+  allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
+  sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
+></iframe>
+
+Crucially, Framer Motion performs all these layout animations at 60fps. In this this post, we're going to learn how.
+
+## The Problem
+
+CSS offers a number of different layout systems, that are all compatible with each other. A flexbox could be placed with in an absolutely positioned grid that sits within a static `float: right`.
+
+With all these possibilities, calculating how a webpage should look is expensive. At 60fps a browser has just 16.6 milliseconds to update the screen before the next frame. It's unlikely, and this is why browsers don't offer a way to animate layout.
+
+Take this switch, which is laid out using a simple flexbox. Even with `transition: all`, changing `justify-content` has an instant effect:
+
+<Switch animations={false} />
+
+```jsx
+.switch {
+  justify-content: align-start;
+  transition: all;
+}
+
+.switch.on {
+  justify-content: align-end;
+}
+```
+
+So front-end developers are limited in their options. Ideally, using only [compositable properties](https://csstriggers.com/) like `transform` and `opacity`. Properties like `background-color` and `box-shadow` trigger paint, which isn't ideal, but sometimes it's unavoidable.
+
+What we ideally want then, is a way of animating layout using only transforms.
+
+## FLIP
+
+The technique at the core of performant layout transitions in the browser was first described by [Paul Lewis](https://aerotwist.com/blog/flip-your-animations/).
+
+It's called FLIP, which stands for **F**irst, **L**ast, **I**nvert, **P**lay.
+
+That is, we:
+
+1. Measure the first layout
+2. Update the CSS and measure the last layout
+3. Apply the inverted delta as a `transform` to make the last layout look like the first
+4. Play the animation
+
+So we do the expensive thing (layout) at the start of the animation, where we have a window of time where the user won't notice heavy work. Then we do the cheap thing (animating `transform`) once per frame.
+
+For very simple use-cases, this is enough to smoothly animate layout:
+
+<Switch />
+
+But there's a drawback to FLIP that can instantly wreck the illusion. **Scale distortion**.
+
+By replacing the animation of `width` and `height` with `scaleX` and `scaleY`, everything style that was bound to that width and height is visibly broken. This includes `box-shadow`, `border-radius`, and the size and styles of any children too.
+
+Try clicking on this box and notice the types of distortions seen when toggling between its two visual states.
+
+<Distorted />
+
+Magic Motion's key innovation is the ability to correct all of this visual distortion, throughout an infinitely deep tree:
+
+<Undistorted />
+
+This is **scale correction**. We apply it to CSS properties that can be corrected without triggering layout, like `box-shadow` and `border-radius`, and we apply it throughout a tree on any component that a user has set to automatically animate.
+
+```jsx
+<motion.div animate />
+```
+
+## Correcting CSS Styles
+
+Correcting the appearance of `border-radius` and `box-shadow` is a three step process.
+
+First, if we're animating between two different values, we interpolate between those.
+
+```jsx
+const borderRadius = mix(origin, target, t);
+```
+
+Second, we keep a record of the "actual", pre-correction value. This in case the animation is interrupted we can start from this, rather than the scale-corrected value (which might have no relevance in a future FLIP scale).
+
+```jsx
+this.current.borderRadius = borderRadius;
+```
+
+Finally, we apply the scale correction.
+
+The `border-radius` style can be set per-corner with styles like `border-top-left-radius`. Each corner can accept two values, one for each axis. So to correct for each axis, we divide the current `border-radius` once by the scale of each.
+
+```jsx
+const x = borderRadius / scaleX;
+const y = borderRadius / scaleY;
+setBorderRadius(`${x}px ${y}px`);
+```
+
+`box-shadow` has an `x` and `y` setting that be corrected in the same way, but it also has `blur` and `spread` that don't have single-axis controls. To correct these values, we have to take an average scale and apply that to both instead:
+
+```jsx
+const averageScale = mix(scaleX, scaleY, 0.5);
+blur = blur / averageScale;
+spread = spread / averageScale;
+```
+
+This works pretty well but it isn't perfect. The limitations of this approach are increasingly obvious with more extreme ratios of x/y distortion:
+
+<ShadowRatio />
+
+But generally the ratios we animate from/to are usually similar enough that the `blur` and `spread` scale correction looks pretty good, and in the future there may be some weighting we can do to stop the more extreme distortions.
+
+Correcting these two styles fixes most of the visual distortion on a component. But we're still left with the distortion of children.
+
+## Correcting Child Components
+
+Without child correction, the shape of this round ball becomes distorted as its parent changes `scaleX`:
+
+<IndependentBroken />
+
+It would be impossible to try and predictably animate this ball's `x` position, as the space it travelled through would itself be stretching and squashing.
+
+Correcting distortion is where we start to pull away from the literal technique of FLIP and adhere to it more in principle.
+
+The first step is to loop through every animating component and remove any currently animating styles. Then, we snapshot their last layout in a second run.
+
+```jsx
+children.forEach((child) => child.reset());
+children.forEach((child) => child.snapshot());
+```
+
+By batching the reads and writes in this way we firstly prevent [layout thrashing](https://developers.google.com/web/fundamentals/performance/rendering/avoid-large-complex-layouts-and-layout-thrashing). In Framer, a prototype might have hundreds of animating components, so optimising this can have a profound effect on performance.
+
+We also ensure we're snapshotting every component as it will exist on the screen in its final state, unaffected by the `transform` of its parent(s).
+
+This is important, because it means we can then track, within a tree, all of the transforms we've applied to each component, then use this to correct the appearance of its children.
+
+Because we want to play the animation of every component independently of this tree transform, each component has a shadow bounding box. This gets interpolated from its visual origin to its target once per frame.
+
+```jsx
+const latest = mix(origin, target, t);
+```
+
+The `target` is **usually** the same as the measured last layout (the **L** in FLIP), but for some effects like `AnimateSharedLayout`'s crossfade it might be somewhere else on screen. Either way, we now know where on the screen we want our component to appear visually.
+
+We use this information to calculate the delta between where we want the component to appear, and where it actually is.
+
+```jsx
+const delta = calcDelta(latest, actualPosition);
+```
+
+The component saves this `delta` to a context that all of its children have access to. The component itself might also have some parent deltas that it has to correct for. So before calculating `delta` we first apply all the latest parent deltas to the actual measured position.
+
+```jsx
+const latest = mix(origin, target, t);
+const transformedPosition = applyParentDeltas(actualPosition, parentDeltas);
+const delta = calcDelta(latest, transformedPosition);
+```
+
+This is how the scale correction is performed. By applying `parentDeltas` to the actual position, we are then just left with figuring out how to get from there to our desired visual position.
+
+As a final step, we also use `parentDeltas` to calculate the combined scale of the tree. We can use this on the CSS style corrections from before, so they correct parent distortions too:
+
+```jsx
+const x = borderRadius / scaleX / treeScaleX;
+```
+
+Our ball now stays the correct size, and can animate through scaled space even as it distorts around it:
+
+<Independent />
+
+## Conclusion
+
+Animating layout in the browser is hard, but Framer and Framer Motion are presenting it in an accessible way, removing all the friction from handoff.
+
+Thanks to the foundations of the FLIP technique, we can so performantly, too. By accounting for tree transformations, its possible to correct scale distortions throughout an infinitely deep tree, on size, position and even CSS styles like `box-shadow` and `border-radius`.
+
+If you're a designer, sign up for the [Framer beta](https://www.framer.com/web/), and if you're a developer you can try out the new [auto-animate](<https://framer.com/api/motion/animation/#automatic-(beta)) and [shared layout](https://framer.com/api/motion/animate-shared-layout) features in the Framer Motion 2 open beta right now!
+
+<!--
+
+Magic Motion is a powerful new feature in Framer Motion 2 that can automatically animate between any two views. Let's take a look at what it does, and how it works.
+
+Today, we released Framer Motion 2 into [open beta](#). It introduces a single new feature, Magic Motion. It packs a ton of power into a very simple API, allowing you to automatically animate between any two visual states.
+
+It scales from very simple jobs, like animating a single component between two CSS states:
+
+<iframe
+     src="https://codesandbox.io/embed/framer-motion-magic-motion-switch-demo-vwmug?fontsize=14&hidenavigation=1&theme=dark"
+     style="width:100%; height:500px; border:0; border-radius: 4px; overflow:hidden;margin-bottom: 40px;"
+     title="Framer Motion: Magic Motion App Store demo"
+     allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
+     sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
+   ></iframe>
+
+To complex transitions, like this multi-component, React Router-powered App Store demo:
+
+<iframe
+     src="https://codesandbox.io/embed/framer-motion-magic-motion-app-store-demo-su6mx?fontsize=14&hidenavigation=1&theme=dark"
+     style="width:100%; height:500px; border:0; border-radius: 4px; overflow:hidden;margin-bottom: 40px;"
+     title="Framer Motion: Magic Motion App Store demo"
+     allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
+     sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
+   ></iframe>
+
+Crucially, it does all the above by only triggering a single expensive layout operation and performing the actual animations using the [FLIP technique](https://aerotwist.com/blog/flip-your-animations/).
+
+Usually, animating a component's width and height using scale introduces visual distortion on border radius, shadows and children elements. Try toggling between these two visual states and note the distortion:
+
+-- Insert obvious scaling demonstration
+
+Magic Motion corrects all FLIP-induced distortion:
+
+-- Insert obvious scaling demonstration
+
+In this post we're going to take a brief look at the basic API before diving into some implementation details that cover
+
+## API Basics
+
+In its simplest application, tagging a `motion` component with the new `magic` prop will automatically animate between visual differences triggered by a component re-render.
+
+```jsx
+<motion.div magic />
+```
+
+The animation used can be customised using the `transition` prop:
+
+```jsx
+<motion.div magic transition={{ duration: 0.2 }}>
+```
+
+If any children are experiencing unwanted visual distortion, this can be corrected by tagging those with `magic`, too:
+
+```jsx
+<motion.ol magic>
+  <motion.li magic />
+</motion.ol>
+```
+
+The `magic` prop is super-powerful when animating CSS layout. Try clicking the coloured boxes to open and close them:
+
+<iframe
+     src="https://codesandbox.io/embed/framer-motion-magic-motion-accordion-demo-w5774?fontsize=14&hidenavigation=1&theme=dark"
+     style="width:100%; height:500px; border:0; border-radius: 4px; overflow:hidden;margin-bottom: 40px;"
+     title="Framer Motion: Magic Motion App Store demo"
+     allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
+     sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
+   ></iframe>
+
+When a box opens, its `height` switches from `30px` to its full size. The container and all its siblings will animate to their new CSS layout using performant transforms, without any visual distortion.
+
+So far, we've seen how Magic Motion can animate a single set of components as they change state. But it can also make entirely separate components animate to and from each other. We can use this technique for a variety of effects including full shared element transitions between different routes.
+
+We first need to use the `SharedMagicMotion` component. It can keep track of `motion` components that are tagged with a `sharedId` prop.
+
+```jsx
+<SharedMagicMotion>
+  <motion.div sharedId="underline" />
+</SharedMagicMotion>
+```
+
+When a new component is added within `SharedMagicMotion` with an existing `sharedId`, it will visually animate from the last component that had it.
+
+<iframe
+     src="https://codesandbox.io/embed/framer-motion-magic-motion-underline-menu-demo-y6tl3?fontsize=14&hidenavigation=1&theme=dark"
+     style="width:100%; height:500px; border:0; border-radius: 4px; overflow:hidden;"
+     title="Framer Motion: Magic Motion underline menu demo"
+     allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
+     sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
+   ></iframe>
+
+The code used to create that underline animation boils down to this:
+
+```jsx
+isSelected && <motion.div sharedId="underline" />;
+```
+
+This works whether the old component is removed or persists. If you choose to keep it around, it'll be automatically hidden but maintain its place in the layout to maintain the illusion that the component animating out is the same one.
+
+<iframe
+     src="https://codesandbox.io/embed/framer-motion-magic-motion-gallery-demo-pknk7?fontsize=14&hidenavigation=1&theme=dark"
+     style="width:100%; height:500px; border:0; border-radius: 4px; overflow:hidden;"
+     title="Framer Motion: Magic Motion underline menu demo"
+     allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
+     sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
+   ></iframe>
+
+By wrapping this new component in `AnimatePresence`, it'll automatically animate back to its old position before being removed.
+
+```jsx
+<SharedMagicMotion>
+  <List />
+  <AnimatePresence>{open && <Item />}</AnimatePresence>
+</SharedMagicMotion>
+```
+
+That's the majority of the API. By combining these simple we can create effects as complex as the App Store demo.
+
+If you're just here to see what you can do with Magic Motion, then go ahead and download the [open beta](#)! Share your creations with me on [Twitter](https://twitter.com/mattgperry) and file any bugs you discover [on our issues page](https://github.com/framer/motion/issues).
+
+Now we're going to take a look at some of
+
+## Snapshotting in React
+
+To work, Magic Motion needs to take a snapshot of an element just before, and synchronously after a DOM update.
+
+Framer Motion is primarily written in hooks. The `useLayoutEffect` would make it trivial to take a snapshot just after a component re-renders but there's no hook that provides the
+
+makes the latter possible, but there's no hook that allows you to take a snapshot just before an update. So the components that provide the magic functionality are written as class components to leverage the `getSnapshotBeforeUpdate` lifecycle method.
+
+The problem with resetting a component's styles and then taking a snapshot is we're writing to the DOM and then reading from it.
+
+```jsx
+// Write
+Object.assign(element.style, resetStyles);
+
+// Read
+const boundingBox = element.getBoundingClientRect();
+const styles = window.getComputedStyle(element);
+```
+
+When you do this write/read/write/read cycle repeatedly to a lot of components the browser is forced to trigger layout every time. This has a serious negative effect on performance.
+
+In the Framer app we could be doing this to hundreds of components at once, so this delay would be quite noticeable.
+
+To solve this, updating components register themselves to an update batcher during the `getSnapshotBeforeUpdate` phase. Then, the first to fire their `componentWillUpdate` fires
+
+```jsx
+// Write
+children.forEach((child) => child.reset());
+
+// Read
+children.forEach((child) => child.snapshot());
+
+// Write
+children.forEach((child) => child.startAnimation());
+```
+
+-->

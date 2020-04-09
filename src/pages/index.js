@@ -48,12 +48,12 @@ const IndexPage = ({ data }) => {
     <Layout>
       <SEO
         keywords={[
-          `matt perry, popmotion, react, pose, framer, framer motion, ui animation`
+          `matt perry, popmotion, react, pose, framer, framer motion, ui animation`,
         ]}
       />
       <HomepageTitle>{`A blog about motion & UI`}</HomepageTitle>
       <ContentContainer>
-        {getPosts(data).map(edge => {
+        {getPosts(data).map((edge) => {
           const { id, title, date, excerpt } = getInfo(edge.node);
 
           return (
@@ -73,7 +73,7 @@ export default IndexPage;
 
 export const query = graphql`
   query {
-    allMarkdownRemark(sort: { fields: [frontmatter___date], order: DESC }) {
+    allMdx(sort: { fields: [frontmatter___date], order: DESC }) {
       totalCount
       edges {
         node {
