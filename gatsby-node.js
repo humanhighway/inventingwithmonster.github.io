@@ -39,12 +39,20 @@ exports.onCreateNode = (data) => {
 exports.onCreatePage = ({ page, actions }) => {
   const { createPage, deletePage } = actions;
   deletePage(page);
+
+  const context = {
+    ...page.context,
+    slug: page.path,
+  };
+
+  if (page.context.frontmatter) {
+    context.date = moment(`${page.context.frontmatter.date}`).format(
+      "DD MMM YYYY"
+    );
+  }
+
   createPage({
     ...page,
-    context: {
-      ...page.context,
-      slug: page.path,
-      date: moment(`${page.context.frontmatter.date}`).format("DD MMM YYYY"),
-    },
+    context,
   });
 };
